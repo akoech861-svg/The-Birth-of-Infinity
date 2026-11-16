@@ -315,27 +315,15 @@ function main() {
     }
     console.log('✓ Determinism verified: Run 1 and Run 2 are identical byte-for-byte.');
 
-    // 2. Robust MAKEFUN_OUTPUT_DIR handling with graceful fallback
-    let outputDir = process.env.MAKEFUN_OUTPUT_DIR || 'out';
-    try {
-      fs.mkdirSync(outputDir, { recursive: true });
-    } catch (err) {
-      console.warn(`Warning: Failed to create MAKEFUN_OUTPUT_DIR (${outputDir}): ${err}. Falling back to 'out'.`);
-      outputDir = 'out';
-      fs.mkdirSync(outputDir, { recursive: true });
-    }
+    // 2. Default output directory must be "/output", using process.env.MAKEFUN_OUTPUT_DIR || '/output'
+    const outputDir = process.env.MAKEFUN_OUTPUT_DIR || '/output';
+    fs.mkdirSync(outputDir, { recursive: true });
 
+    // 3. Write only "entry.png" to the selected output directory
     const outputPath = `${outputDir.replace(/\/+$/, '')}/entry.png`;
     fs.writeFileSync(outputPath, run1);
 
-    // Also ensure out/entry.png exists for local verification
-    const defaultOutputPath = 'out/entry.png';
-    if (outputPath !== defaultOutputPath) {
-      fs.mkdirSync('out', { recursive: true });
-      fs.writeFileSync(defaultOutputPath, run1);
-    }
-
-    // 3. Verify file size (must be no larger than 1 MiB)
+    // 4. Verify file size (must be no larger than 1 MiB)
     const stats = fs.statSync(outputPath);
     const maxSizeBytes = 1024 * 1024;
     const fileSizeMiB = stats.size / (1024 * 1024);
@@ -345,7 +333,7 @@ function main() {
       process.exit(1);
     }
 
-    // 4. Verify PNG signature & header (magic bytes)
+    // 5. Verify PNG signature & header (magic bytes)
     const pngSignature = Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]);
     if (run1.length < 8 || Buffer.compare(run1.subarray(0, 8), pngSignature) !== 0) {
       console.error('ERROR: Generated file is not a valid PNG (invalid signature)!');
@@ -353,7 +341,7 @@ function main() {
     }
     console.log('✓ PNG signature verified.');
 
-    // 5. Verify image dimensions and metadata from IHDR chunk
+    // 6. Verify image dimensions and metadata from IHDR chunk
     if (run1.length < 24) {
       console.error('ERROR: PNG file too short to contain IHDR chunk!');
       process.exit(1);
@@ -375,14 +363,7 @@ function main() {
       process.exit(1);
     }
 
-    // 6. Verify out/entry.png as well
-    const defaultStats = fs.statSync(defaultOutputPath);
-    if (defaultStats.size > maxSizeBytes) {
-      console.error(`ERROR: out/entry.png size exceeds 1 MiB limit!`);
-      process.exit(1);
-    }
-
-    console.log(`SUCCESS: entry.png successfully generated and verified at ${outputPath} and ${defaultOutputPath}.`);
+    console.log(`SUCCESS: entry.png successfully generated and verified at ${outputPath}.`);
   } catch (err) {
     console.error('ERROR: Uncaught exception during generation or verification:', err);
     process.exit(1);
