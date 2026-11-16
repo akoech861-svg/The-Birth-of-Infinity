@@ -341,9 +341,9 @@ function main() {
     }
     console.log('✓ PNG signature verified.');
 
-    // 6. Verify image dimensions and metadata from IHDR chunk
-    if (run1.length < 24) {
-      console.error('ERROR: PNG file too short to contain IHDR chunk!');
+    // 6. Verify image dimensions and metadata from IHDR chunk (requires at least 26 bytes for bit depth and color type at offsets 24 and 25)
+    if (run1.length < 26) {
+      console.error('ERROR: PNG file too short to contain IHDR chunk, bit depth, and color type (less than 26 bytes)!');
       process.exit(1);
     }
     const width = (run1[16] << 24) | (run1[17] << 16) | (run1[18] << 8) | run1[19];

@@ -19,3 +19,12 @@ Competition: https://make.fun/bounty/ai-excited-01
 node main.ts
 
 The program generates entry.png in /output by default. Set MAKEFUN_OUTPUT_DIR to use another output directory.
+
+## Deterministic Two-Pass Generation & PNG Validation
+
+- **Deterministic Two-Pass Generation:** The artwork is rendered twice in separate passes and compared byte-for-byte to guarantee absolute determinism.
+- **PNG Validation:** The output is validated to ensure:
+  - File size is under 1 MiB.
+  - Valid 8-byte PNG signature.
+  - IHDR chunk structure with at least 26 bytes checked before reading dimensions, bit depth, and color type at offsets 24 and 25.
+  - Exact 1024x1024 RGBA dimensions.
